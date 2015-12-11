@@ -4,7 +4,7 @@
  * TypeClass (api/impl/syntax) for marshalling objects into
  * `java.util.HashMap<String,Object>` (yay, big data!).
  */
-package s4m.bdsm
+package s4m.smbd
 
 import shapeless._, labelled.{ field, FieldType }
 

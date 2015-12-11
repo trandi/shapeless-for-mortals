@@ -101,6 +101,6 @@ object EnsimeBuild extends Build {
     )
   )
 
-  lazy val bdsm = project settings (common)
+  lazy val smbd = project settings (common)
 
 }

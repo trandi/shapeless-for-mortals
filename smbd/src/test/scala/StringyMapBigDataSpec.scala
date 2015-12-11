@@ -4,8 +4,8 @@ package s4m.exercise1
 
 import org.scalatest._
 
-class BigDataStringMapSpec extends FlatSpec with Matchers {
-  "BigDataStringMapSpec" should "marshall all the things!" in {
+class StringyMapBigDataSpec extends FlatSpec with Matchers {
+  "StringyMapBigDataSpec" should "marshall all the things!" in {
     fail
   }
 }
