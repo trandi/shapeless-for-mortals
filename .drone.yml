@@ -1,0 +1,7 @@
+build:
+  image: ensime/ensime:latest
+  pull: true
+  commands:
+    - git log | head -n 20
+    - sbt compile
+    - sbt smbd/test
