@@ -93,14 +93,6 @@ object EnsimeBuild extends Build {
     )
   )
 
-  lazy val sexpress = project settings (common) settings (
-    offline := true,
-    resolvers += Resolver.sonatypeRepo("snapshots"),
-    libraryDependencies ++= List(
-      "org.ensime" %% "sexpress" % "0.9.10-SNAPSHOT"
-    )
-  )
-
   lazy val smbd = project settings (common)
 
 }
