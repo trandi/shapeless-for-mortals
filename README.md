@@ -15,4 +15,4 @@ You may also wish to check out the following, as they will be instructive:
 - https://github.com/ensime/ensime-server/
 - https://github.com/fommil/spray-json-shapeless/
 
-On the day, please ensure that you have the latest version of this repository, as I will surely be making last minute changes.
+I am intentionally not providing answers, but **I will review and advise anybody who submits a PR here**. If you want to cheat, you can always look at the green PRs.
