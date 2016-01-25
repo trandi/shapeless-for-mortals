@@ -6,7 +6,7 @@
  */
 package s4m.smbd
 
-import shapeless._, labelled.{ field, FieldType }
+import shapeless._//, labelled.{ field, FieldType }
 
 /**
  * This exercise involves writing tests, only a skeleton is provided.
@@ -50,8 +50,8 @@ package object impl {
     override def fromProperties(m: StringyMap): BigResult[HNil] = Right(HNil)
   }
 
-  implicit def hListBigDataFormat[Head, Tail <: HList](
-     implicit lazyHeadFormat: Lazy[BigDataFormat[Head]], lazyTailFormat: Lazy[BigDataFormat[Tail]])
+  implicit def hListBigDataFormat[Key <: Symbol, Head, Tail <: HList](
+     implicit key: Witness.Aux[Key], lazyHeadFormat: Lazy[BigDataFormat[Head]], lazyTailFormat: Lazy[BigDataFormat[Tail]])
   = new BigDataFormat[Head::Tail] {
 
     val hf = lazyHeadFormat.value
@@ -81,8 +81,8 @@ package object impl {
   }
 
 
-  implicit def coproductBigDataFormat[Head, Tail <: Coproduct](
-    implicit lazyHeadFormat: Lazy[BigDataFormat[Head]], lazyTailFormat: Lazy[BigDataFormat[Tail]]
+  implicit def coproductBigDataFormat[Key <: Symbol, Head, Tail <: Coproduct](
+    implicit key: Witness.Aux[Key], lazyHeadFormat: Lazy[BigDataFormat[Head]], lazyTailFormat: Lazy[BigDataFormat[Tail]]
     )
   = new BigDataFormat[Head :+: Tail] {
 
