@@ -42,12 +42,88 @@ package object impl {
   import api._
 
   // EXERCISE 1.1 goes here
-  // implicit def hNilBigDataFormat = ???
-  // implicit def hListBigDataFormat = ???
-  // implicit def cNilBigDataFormat = ???
-  // implicit def coproductBigDataFormat = ???
+  implicit def hNilBigDataFormat = new BigDataFormat[HNil] {
+    override def label: String = "HNil"
 
-  implicit def familyBigDataFormat[T] = ???
+    override def toProperties(t: HNil): StringyMap = new StringyMap()
+
+    override def fromProperties(m: StringyMap): BigResult[HNil] = Right(HNil)
+  }
+
+  implicit def hListBigDataFormat[Head, Tail <: HList](
+     implicit lazyHeadFormat: Lazy[BigDataFormat[Head]], lazyTailFormat: Lazy[BigDataFormat[Tail]])
+  = new BigDataFormat[Head::Tail] {
+
+    val hf = lazyHeadFormat.value
+    val tf = lazyTailFormat.value
+
+    override def label: String = "HList"
+
+    override def toProperties(t: Head::Tail): StringyMap = {
+      val res = hf.toProperties(t.head)
+      res.putAll(tf.toProperties(t.tail))
+      res
+    }
+
+    override def fromProperties(m: StringyMap): BigResult[Head::Tail] = {
+      // TODO fix the naked get()'s
+      val r = hf.fromProperties(m).right.get :: tf.fromProperties(m).right.get
+      Right(r)
+    }
+  }
+
+  implicit def cNilBigDataFormat = new BigDataFormat[CNil] {
+    override def label: String = "CNil"
+
+    override def toProperties(t: CNil): StringyMap = new StringyMap()
+
+    override def fromProperties(m: StringyMap): BigResult[CNil] = Left("Can't create CNil from props")
+  }
+
+
+  implicit def coproductBigDataFormat[Head, Tail <: Coproduct](
+    implicit lazyHeadFormat: Lazy[BigDataFormat[Head]], lazyTailFormat: Lazy[BigDataFormat[Tail]]
+    )
+  = new BigDataFormat[Head :+: Tail] {
+
+    val hf = lazyHeadFormat.value
+    val tf = lazyTailFormat.value
+
+    override def label: String = "Coproduct"
+
+    override def toProperties(t: :+:[Head, Tail]): StringyMap = {
+      // TODO fix the naked "get()'s"
+      val res = hf.toProperties(t.head.get)
+      res.putAll(tf.toProperties(t.tail.get))
+      res
+    }
+
+    override def fromProperties(m: StringyMap): BigResult[:+:[Head, Tail]] = {
+      // TODO fix naked get()s
+      val r = Inl[Head, Tail](hf.fromProperties(m).right.get)
+      val t = Inr[Head, Tail](tf.fromProperties(m).right.get)
+      // TODO why take r rather than t ???
+      Right(r)
+    }
+  }
+
+
+  implicit def familyBigDataFormat[T, Repr](
+     implicit gen: LabelledGeneric.Aux[T, Repr], lazyFormat: Lazy[BigDataFormat[Repr]], tpe: Typeable[T])
+  = new BigDataFormat[T] {
+
+    val f = lazyFormat.value
+
+    override def label: String = "Family"
+
+    override def toProperties(t: T): StringyMap = {
+      f.toProperties(gen.to(t))
+    }
+
+    override def fromProperties(m: StringyMap): BigResult[T] = {
+      Right(gen.from(f.fromProperties(m).right.get))
+    }
+  }
 }
 
 package impl {
