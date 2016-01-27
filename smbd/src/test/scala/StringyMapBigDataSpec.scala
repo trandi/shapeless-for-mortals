@@ -6,7 +6,7 @@ import org.scalatest._
 import shapeless._
 
 import s4m.smbd.api._
-//import s4m.smbd.impl._
+import s4m.smbd.impl._
 import s4m.smbd.syntax._
 
 package api {
