@@ -68,7 +68,7 @@ package object impl {
 
 
 
-  implicit def hNilBigDataFormat = new BigDataFormat[HNil] {
+  implicit def hNilBigDataFormat:BigDataFormat[HNil] = new BigDataFormat[HNil] {
     override def label: String = "HNil"
 
     override def toProperties(t: HNil): StringyMap = new StringyMap()
@@ -79,7 +79,7 @@ package object impl {
   implicit def hListBigDataFormat[Key <: Symbol, Head, Tail <: HList](
      implicit key: Witness.Aux[Key],
      sprimitive: SPrimitive[Head], // what happens if we have another product nested instead of a Primitive !???
-     lazyTailFormat: Lazy[BigDataFormat[Tail]])
+     lazyTailFormat: Lazy[BigDataFormat[Tail]]): BigDataFormat[FieldType[Key, Head] :: Tail]
   = new BigDataFormat[FieldType[Key, Head] :: Tail] {
 
     val tf = lazyTailFormat.value
@@ -93,13 +93,16 @@ package object impl {
     }
 
     override def fromProperties(m: StringyMap): BigResult[FieldType[Key, Head] :: Tail] = {
-      // TODO fix the naked get()'s
-      val r = field[Key](sprimitive.fromValue(m.get(key.value.name))) :: tf.fromProperties(m).right.get
-      Right(r)
+      if (m.containsKey(key.value.name)) {
+        val r = field[Key](sprimitive.fromValue(m.get(key.value.name))) :: tf.fromProperties(m).right.get
+        Right(r)
+      }else {
+        Left("some sensible error here")
+      }
     }
   }
 
-  implicit def cNilBigDataFormat = new BigDataFormat[CNil] {
+  implicit def cNilBigDataFormat: BigDataFormat[CNil] = new BigDataFormat[CNil] {
     override def label: String = "CNil"
 
     override def toProperties(t: CNil): StringyMap = new StringyMap()
@@ -112,7 +115,7 @@ package object impl {
     implicit key: Witness.Aux[Key],
     lazyHeadFormat: Lazy[BigDataFormat[Head]], // this will be a product itself not a primitive
     lazyTailFormat: Lazy[BigDataFormat[Tail]]
-    )
+    ): BigDataFormat[FieldType[Key, Head] :+: Tail]
   = new BigDataFormat[FieldType[Key, Head] :+: Tail] {
 
     val hf = lazyHeadFormat.value
@@ -121,18 +124,19 @@ package object impl {
     override def label: String = "Coproduct"
 
     override def toProperties(t: FieldType[Key, Head] :+: Tail): StringyMap = {
-      // TODO fix the naked "get()'s"
-      val res = tf.toProperties(t.tail.get)
-      res.putAll(hf.toProperties(t.head.get))
+      val res = new StringyMap
+      t.tail.foreach(x => res.putAll(tf.toProperties(x)))
+      t.head.foreach(x => res.putAll(hf.toProperties(x)))
       res
     }
 
     override def fromProperties(m: StringyMap): BigResult[FieldType[Key, Head] :+: Tail] = {
-      // TODO fix naked get()s
-      val r = Inl(field[Key](hf.fromProperties(m).right.get))
-      //val t = Inr(field[Key](tf.fromProperties(m).right.get))
-      // TODO why take r rather than t ???
-      Right(r)
+      val r = hf.fromProperties(m).right.map(h => Inl(field[Key](h)))
+      if(r.isLeft) {
+        tf.fromProperties(m).right.map(x => Inr[FieldType[Key, Head], Tail](x))
+      } else {
+        r
+      }
     }
   }
 
@@ -140,7 +144,7 @@ package object impl {
   implicit def familyBigDataFormat[T, Repr](
      implicit gen: LabelledGeneric.Aux[T, Repr],
      lazyFormat: Lazy[BigDataFormat[Repr]],
-     tpe: Typeable[T])
+     tpe: Typeable[T]): BigDataFormat[T]
   = new BigDataFormat[T] {
 
     val f = lazyFormat.value
@@ -152,7 +156,7 @@ package object impl {
     }
 
     override def fromProperties(m: StringyMap): BigResult[T] = {
-      Right(gen.from(f.fromProperties(m).right.get))
+      f.fromProperties(m).right.map(r => gen.from(r))
     }
   }
 }
