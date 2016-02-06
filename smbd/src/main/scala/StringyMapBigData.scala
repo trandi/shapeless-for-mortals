@@ -125,17 +125,20 @@ package object impl {
 
     override def toProperties(t: FieldType[Key, Head] :+: Tail): StringyMap = {
       val res = new StringyMap
+      t.head.foreach(x => {
+        res.putAll(hf.toProperties(x))
+        res.put("~actualType", key.value.name)
+      })
       t.tail.foreach(x => res.putAll(tf.toProperties(x)))
-      t.head.foreach(x => res.putAll(hf.toProperties(x)))
       res
-    }
+   }
 
     override def fromProperties(m: StringyMap): BigResult[FieldType[Key, Head] :+: Tail] = {
-      val r = hf.fromProperties(m).right.map(h => Inl(field[Key](h)))
-      if(r.isLeft) {
-        tf.fromProperties(m).right.map(x => Inr[FieldType[Key, Head], Tail](x))
+      val actualType = m.get("~actualType").asInstanceOf[String]
+      if(actualType == key.value.name){
+        hf.fromProperties(m).right.map(h => Inl(field[Key](h)))
       } else {
-        r
+        tf.fromProperties(m).right.map(x => Inr[FieldType[Key, Head], Tail](x))
       }
     }
   }
