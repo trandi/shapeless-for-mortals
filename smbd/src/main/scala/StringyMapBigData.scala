@@ -124,13 +124,24 @@ package object impl {
     override def label: String = "Coproduct"
 
     override def toProperties(t: FieldType[Key, Head] :+: Tail): StringyMap = {
-      val res = new StringyMap
-      t.head.foreach(x => {
-        res.putAll(hf.toProperties(x))
-        res.put("~actualType", key.value.name)
-      })
-      t.tail.foreach(x => res.putAll(tf.toProperties(x)))
-      res
+      t match {
+        case Inl(h) => {
+          val res = hf.toProperties(h)
+          res.put("~actualType", key.value.name)
+          res
+        }
+        case Inr(t) => tf.toProperties(t)
+      }
+
+
+//      // The below WORKS locally !!
+//      val res = new StringyMap
+//      t.head.foreach(x => {
+//        res.putAll(hf.toProperties(x))
+//        res.put("~actualType", key.value.name)
+//      })
+//      t.tail.foreach(x => res.putAll(tf.toProperties(x)))
+//      res
    }
 
     override def fromProperties(m: StringyMap): BigResult[FieldType[Key, Head] :+: Tail] = {
